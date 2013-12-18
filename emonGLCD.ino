@@ -1,30 +1,21 @@
 //------------------------------------------------------------------------------------------------------------------------------------------------
-// emonGLCD Home Energy Monitor example
-// to be used with nanode Home Energy Monitor example
-
-// Uses power1 variable - change as required if your using different ports
+// emonGLCD Implmementation
+// This is a continuation from example project HomeEnergyMonitor
+// which is part of https://github.com/openenergymonitor/EmonGLCD
 
 // emonGLCD documentation http://openEnergyMonitor.org/emon/emonglcd
-
-// RTC to reset Kwh counters at midnight is implemented is software. 
-// Correct time is updated via NanodeRF which gets time from internet
-// Temperature recorded on the emonglcd is also sent to the NanodeRF for online graphing
 
 // GLCD library by Jean-Claude Wippler: JeeLabs.org
 // 2010-05-28 <jcw@equi4.com> http://opensource.org/licenses/mit-license.php
 //
-// Authors: Glyn Hudson and Trystan Lea
-// Part of the: openenergymonitor.org project
+// Author: Miloslav Fritz
 // Licenced under GNU GPL V3
-// http://openenergymonitor.org/emon/license
 
 // THIS SKETCH REQUIRES:
 
 // Libraries in the standard arduino libraries folder:
 //
 //	- OneWire library	http://www.pjrc.com/teensy/td_libs_OneWire.html
-//	- DallasTemperature	http://download.milesburton.com/Arduino/MaximTemperature
-//                           or https://github.com/milesburton/Arduino-Temperature-Control-Library
 //	- JeeLib		https://github.com/jcw/jeelib
 //	- RTClib		https://github.com/jcw/rtclib
 //	- GLCD_ST7565		https://github.com/jcw/glcdlib
