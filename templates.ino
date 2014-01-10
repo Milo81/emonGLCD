@@ -3,11 +3,10 @@
 #include "utility/font_metric01.h"
 
 
-void draw_temp_page(int temp, int hum, float dew)
+void draw_temp_page(int temp, int hum, int dew)
 {
   glcd.clear();
   
-  float f;
   char str[10];
   glcd.setFont(font_metric04);
   dtostrf(temp/10.0,0,1,str);
@@ -22,7 +21,7 @@ void draw_temp_page(int temp, int hum, float dew)
   glcd.drawString(102,15,str);
   glcd.drawString_P(75,15,PSTR("HUM"));
   
-  dtostrf(dew,0,0,str);
+  itoa(dew/10,str, 10);
   strcat(str,"*");
   glcd.drawString(102,29,str);
   glcd.drawString_P(75,29,PSTR("DEW"));
@@ -33,7 +32,7 @@ void draw_temp_page(int temp, int hum, float dew)
 //------------------------------------------------------------------
 // Draws a footer showing sensor2 temp, humidity, and calculated dew point and clock
 //------------------------------------------------------------------
-void draw_temperature_time_footer(int temp, int hum, float dew, int hour, int minute, unsigned long last_base, unsigned long last_1, unsigned long last_2)
+void draw_temperature_time_footer(int temp, int hum, int dew, int hour, int minute, unsigned long last_base, unsigned long last_1, unsigned long last_2)
 {
   glcd.drawLine(0, 47, 128, 47, WHITE);     //middle horizontal line 
 
@@ -51,7 +50,7 @@ void draw_temperature_time_footer(int temp, int hum, float dew, int hour, int mi
   glcd.drawString_P(26,50,PSTR("HUM"));
   glcd.drawString(42,50,str);
                
-  dtostrf(dew,0,1,str);
+  dtostrf(dew/10.0,0,1,str);
   strcat(str,"*");
   glcd.drawString_P(26,57,PSTR("DEW"));
   glcd.drawString(42,57,str);
@@ -96,9 +95,34 @@ void draw_temperature_time_footer(int temp, int hum, float dew, int hour, int mi
     glcd.setFont(font_metric01);
     glcd.drawString(65,50, str);
   }
-    
-
 }
 
+//------------------------------------------------------------------
+// Draws a graph with history values
+//------------------------------------------------------------------
+void draw_graph(struct node* list)
+{
+  // first get min/max from all values
+  int min = 10000, max = 0;
 
+  struct node *curr = list;
+  while (curr->next)
+  {
+    if (curr->value < min) min = curr->value;
+    if (curr->value > max) max = curr->value;
+    curr = curr->next;
+  }
 
+  curr = list;
+  int i = 0;
+  while (curr->next)
+  {
+    // calculate the height of the bar
+    byte h = map(curr->value, min, max, 1, 12);
+    h = constrain(h, 1, 12);
+    glcd.drawRect(56+(i*3+1), 12-h, 2, h, WHITE);
+    
+    curr = curr->next;
+    i++;
+  }
+}

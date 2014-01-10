@@ -42,29 +42,34 @@ RTC_Millis RTC;
 #define freq RF12_868MHZ     // frequency - match to same frequency as RFM12B module (change to 868Mhz or 915Mhz if appropriate)
 #define group 210 
 
-unsigned long fast_update, slow_update;
+unsigned long fast_update;
 
-float dew_point1, dew_point2;
+int dew_point1, dew_point2;
 
 //---------------------------------------------------
 // Data structures for transfering data between units
 //---------------------------------------------------
-
-typedef struct { int temperature; } PayloadGLCD;
-PayloadGLCD emonglcd;
 
 typedef struct {int temp1, temp2, humidity, battery; } PayloadTH1;
 PayloadTH1 emonth1;
 typedef struct {int temp, humidity; } PayloadTH2;
 PayloadTH2 emonth2;
 
-int hour = 18, minute = 0;
-
 const int greenLED=6;               // Green tri-color LED
 const int redLED=9;                 // Red tri-color LED
 const int LDRpin=4;    		    // analog pin of onboard lightsensor 
 int cval_use;
-char GREEN;
+byte GREEN;
+
+// last hour average temp
+int last_hour_avg;
+// number of samples - needed for calculation of average
+byte samples;
+
+// history of values for past 24 hours
+struct node *head;
+
+int current_hour;
 
 //-------------------------------------------------------------------------------------------- 
 // Flow control
@@ -83,8 +88,10 @@ void setup()
   glcd.backLight(200);
 
   pinMode(greenLED, OUTPUT); 
-  pinMode(redLED, OUTPUT); 
-  
+  pinMode(redLED, OUTPUT);
+
+  // Serial.begin(9600);
+
 }
 
 //--------------------------------------------------------------------------------------------
@@ -92,7 +99,7 @@ void setup()
 //--------------------------------------------------------------------------------------------
 void loop()
 {
-  
+
   if (rf12_recvDone())
   {
     if (rf12_crc == 0 && (rf12_hdr & RF12_HDR_CTL) == 0)  // and no rf errors
@@ -106,15 +113,23 @@ void loop()
         digitalWrite(greenLED, HIGH);
         GREEN = 1;
       } 
-      else if (node_id == 19)
+      else if (node_id == 19)   //19 is temperature node
       { 
         emonth1 = *(PayloadTH1*) rf12_data;
         last_sensor1 = millis();
         digitalWrite(greenLED, HIGH);
         GREEN = 1;
         dew_point1 = calculate_dew_point(emonth1.temp1, emonth1.humidity);
+        // update average value
+        if (last_hour_avg == 0)
+          last_hour_avg = emonth1.temp1;
+        else
+        {
+          last_hour_avg = (emonth1.temp1 + (samples * last_hour_avg))/(samples - 1);
+          samples++;
+        }
       }
-      else if (node_id == 20)
+      else if (node_id == 20)  // 20 is another temperature node
       { 
         emonth2 = *(PayloadTH2*) rf12_data;
         last_sensor2 = millis();
@@ -124,6 +139,8 @@ void loop()
       }
     }
   }
+
+  byte hour, minute;
 
   //--------------------------------------------------------------------------------------------
   // Display update every 200ms
@@ -138,15 +155,19 @@ void loop()
 
     draw_temp_page(emonth1.temp1, emonth1.humidity, dew_point1);
     draw_temperature_time_footer(emonth2.temp, emonth2.humidity, dew_point2, hour,minute, last_emonbase, last_sensor1, last_sensor2);
+    draw_graph(head);
     glcd.refresh();
     
     if (((hour > 22) ||  (hour < 5)) && last_emonbase != 0)
+    {
       glcd.backLight(0);
-    else {
+    }
+    else 
+    {
       int LDR = analogRead(LDRpin);                     // Read the LDR Value so we can work out the light level in the room.
       int LDRbacklight = map(LDR, 0, 1023, 50, 250);    // Map the data from the LDR from 0-1023 (Max seen 1000) to var GLCDbrightness min/max
       LDRbacklight = constrain(LDRbacklight, 0, 255);   // Constrain the value to make sure its a PWM value 0-255
-      cval_use = cval_use + (LDRbacklight - cval_use)*0.5;        //smooth transitions of brightness
+      cval_use = cval_use + (LDRbacklight - cval_use)>>1;        //smooth transitions of brightness
       glcd.backLight(cval_use);
     }
     
@@ -155,21 +176,34 @@ void loop()
       digitalWrite(greenLED, LOW);
       GREEN = 0;
     }
-      
-  } 
-  
-  if ((millis()-slow_update)>10000)
-  {
-    slow_update = millis();
-   
 
+   
+  
+    // update every hour - add last hour average
+    if (last_emonbase != 0 && current_hour != hour)
+    {
+      current_hour = hour;
+  
+      if (last_sensor1 != 0) {
+        // reset the averaging
+        samples = 0;
+        
+        if (head == NULL)
+          head = list_new(last_hour_avg);
+        else
+          head = list_insert_max(last_hour_avg, 24, head);
+        
+        last_hour_avg = 0;
+      }
+  
+    }
   }
 }
 
-float calculate_dew_point(int temp, int hum)
+int calculate_dew_point(int temp, int hum)
 {
   float humf = hum / 10.0;
   float tempf = temp / 10.0;
   
-  return (pow(humf/100, 0.125) * (112 + 0.9 * tempf) + 0.1 * tempf - 112);
+  return int((pow(humf/100, 0.125) * (112 + 0.9 * tempf) + 0.1 * tempf - 112)*10);
 }
