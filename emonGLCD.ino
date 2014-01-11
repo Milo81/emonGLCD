@@ -23,6 +23,7 @@
 // Other files in project directory (should appear in the arduino tabs above)
 //	- icons.ino
 //	- templates.ino
+//  - linked_list.ino
 //
 //-------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -121,13 +122,8 @@ void loop()
         GREEN = 1;
         dew_point1 = calculate_dew_point(emonth1.temp1, emonth1.humidity);
         // update average value
-        if (last_hour_avg == 0)
-          last_hour_avg = emonth1.temp1;
-        else
-        {
-          last_hour_avg = (emonth1.temp1 + (samples * last_hour_avg))/(samples - 1);
-          samples++;
-        }
+        last_hour_avg = (emonth1.temp1 + (samples * last_hour_avg))/(samples + 1);
+        samples++;
       }
       else if (node_id == 20)  // 20 is another temperature node
       { 
@@ -185,15 +181,15 @@ void loop()
       current_hour = hour;
   
       if (last_sensor1 != 0) {
-        // reset the averaging
-        samples = 0;
         
         if (head == NULL)
           head = list_new(last_hour_avg);
         else
           head = list_insert_max(last_hour_avg, 24, head);
         
+        // reset the averaging
         last_hour_avg = 0;
+        samples = 0;
       }
   
     }

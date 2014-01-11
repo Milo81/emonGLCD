@@ -45,12 +45,12 @@ void draw_temperature_time_footer(int temp, int hum, int dew, int hour, int minu
   
   // Humidity and dew point
   glcd.setFont(font_metric01);
-  dtostrf(hum/10.0,0,1,str);
+  dtostrf(hum/10.0,4,1,str);
   strcat(str,"%");
   glcd.drawString_P(26,50,PSTR("HUM"));
   glcd.drawString(42,50,str);
                
-  dtostrf(dew/10.0,0,1,str);
+  dtostrf(dew/10.0,4,1,str);
   strcat(str,"*");
   glcd.drawString_P(26,57,PSTR("DEW"));
   glcd.drawString(42,57,str);
@@ -108,9 +108,16 @@ void draw_graph(struct node* list)
   struct node *curr = list;
   while (curr->next)
   {
-    if (curr->value < min) min = curr->value;
-    if (curr->value > max) max = curr->value;
+    min = min(curr->value, min);
+    max = max(curr->value, max);
     curr = curr->next;
+  }
+
+  if (min == max)
+  {
+    // this will make the bar centered
+    max = max*2;
+    min = min/2;
   }
 
   curr = list;
