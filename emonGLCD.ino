@@ -218,10 +218,10 @@ void loop()
       GREEN = 0;
     }
 
-    // special feature - in morning when i wake up, and it's around zero
-    // degrees outside, blink red LED, so I know that I will have to
-    // deice windshield on my car probably...
-    if ((hour > 5 || hour < 7) && emonth2.temp1 < 10) red_blink = 1;
+    // special feature - in morning when i wake up, and both dew point
+    // and temperature are both below zero, blink red LED, so I know that I will have to
+    // deice windshield on my car (probably)...
+    if ((hour > 5 || hour < 7) && emonth2.temp1 < 10 && dew_point2 < 0) red_blink = 1;
     else red_blink = 0;
     
   
