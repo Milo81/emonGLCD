@@ -3,7 +3,7 @@
 #include "utility/font_metric01.h"
 
 
-void draw_temp_page(int temp, int hum, int dew)
+void draw_temp_page(int temp, int hum, int dew, const char *location)
 {
   glcd.clear();
   
@@ -14,7 +14,8 @@ void draw_temp_page(int temp, int hum, int dew)
   glcd.drawString(0,15, str);
   
   glcd.setFont(font_metric02);
-  glcd.drawString_P(0,0, PSTR("TEPLOTA"));
+  glcd.drawString_P(0,0, PSTR("TEPL."));
+  glcd.drawString_P(45,0, location);
   
   itoa(hum/10,str, 10);
   strcat(str, "%");
@@ -25,14 +26,33 @@ void draw_temp_page(int temp, int hum, int dew)
   strcat(str,"*");
   glcd.drawString(102,29,str);
   glcd.drawString_P(75,29,PSTR("DEW"));
-    
+}
+
+void draw_press(long pressure)
+{
+  glcd.clear();
+
+  glcd.setFont(font_metric02);
+  glcd.drawString_P(0,0, PSTR("TLAK"));
+
+  char str[10];
+  dtostrf(pressure/100.0,0,1,str);
+  glcd.setFont(font_metric04);
+  glcd.drawString(0,15, str);
+
+  glcd.setFont(font_metric02);
+  byte x = 100;
+  if (pressure < 100000) x = 83;
+  glcd.drawString_P(x,29, PSTR("MB"));
 }
 
 
 //------------------------------------------------------------------
 // Draws a footer showing sensor2 temp, humidity, and calculated dew point and clock
 //------------------------------------------------------------------
-void draw_temperature_time_footer(int temp, int hum, int dew, int hour, int minute, unsigned long last_base, unsigned long last_1, unsigned long last_2)
+void draw_temperature_time_footer(int temp, int hum, int dew, 
+  int hour, int minute, 
+  unsigned long last_base, unsigned long last_1, unsigned long last_2)
 {
   glcd.drawLine(0, 47, 128, 47, WHITE);     //middle horizontal line 
 

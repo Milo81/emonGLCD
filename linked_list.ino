@@ -1,12 +1,12 @@
 struct node {
-  int value;
+  long value;
   struct node *next;
 };
 
 // typedef struct node node_t;
 
 // creates a new list element with given value 
-struct node * list_new(int val)
+struct node * list_new(long val)
 {
   struct node *res = (struct node*) malloc(sizeof(struct node));
   res->value = val;
@@ -89,7 +89,7 @@ byte list_len(struct node *head)
 // }
 
 
-struct node * list_insert_max(int val, byte max, struct node *head)
+struct node * list_insert_max(long val, byte max, struct node *head)
 {
   struct node *ne = list_new(val);
   ne->next = head;
