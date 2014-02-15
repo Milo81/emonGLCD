@@ -123,7 +123,7 @@ void draw_temperature_time_footer(int temp, int hum, int dew,
 void draw_graph(struct node* list)
 {
   // first get min/max from all values
-  int min = 10000, max = 0;
+  long min = 200000, max = 0;
 
   struct node *curr = list;
   while (curr->next)
